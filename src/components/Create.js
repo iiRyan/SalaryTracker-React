@@ -1,120 +1,121 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { useAddMonthMutation } from "../store/apiSlice";
+import { default as api } from "../store/apiSlice";
+import {capitalizeFirstLetter} from "../helper/helper";
 
 function Create() {
-  // Update state to include the income object with 'amount' and 'title'
-  const [values, setValues] = useState({
-    month: "",
-    income: {
-      amount: "",
-      title: "",
-    },
-  });
-
-  const navigate = useNavigate();
-
-  // Handle form submission and post the data
-  const handleSubmit = (event) => {
-    event.preventDefault();
-
-    axios
-      .post("http://localhost:9080/expenses-tracker/api/months", values)
-      .then((res) => {
-        console.log(res);
-        navigate("/");
-      })
-      .catch((err) => console.log(err));
-  };
+    const [values, setValues] = useState({
+        month: "",
+        income: {
+          amount: "",
+          description: "",
+        },
+      });
+      
+      const navigate = useNavigate();
+      const [addMonth] = api.useAddMonthMutation();  // Use mutation hook
+      
+      const handleSubmit = async (event) => {
+        event.preventDefault();
+      
+        try {
+          // Create the transaction payload from values
+          const initialTransaction = {
+            month: values.month,
+            description: values.description,
+            amount: values.amount,
+          };
+      
+          console.log(initialTransaction);
+          await addMonth({ initialTransaction }).unwrap();  // Use mutation to post data
+      
+          console.log("Month added successfully");
+          navigate("/");
+      
+        } catch (error) {
+            const errorMessage = error?.data?.messages || "Something went wrong!";
+          // Handle specific errors based on the server response
+          if (error.status === 409) {
+            alert(capitalizeFirstLetter(values.month) +" already exists.");
+          } else if( error.status === 400) {
+            alert(errorMessage);
+          } 
+          else {
+            console.error("An error occurred:", error);
+            alert("Something went wrong, please try again later.");
+          }
+        }
+      };
+      
 
   return (
-    <div>
-      <div className="flex flex-col items-center bg-customBlack py-8 px-4 min-h-screen">
-        <div className="w-full max-w-md bg-darkerGray p-8 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-semibold mb-6 text-center">
-            Add Month and Income
-          </h2>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-r from-[#18191A] to-[#28292b] px-4 py-8">
+      <div className="w-full max-w-md bg-[#3A3B3C] border border-gray-700 p-8 rounded-lg shadow-lg">
+        <h2 className="text-white text-3xl font-semibold mb-6 text-center">
+          Add Month and Income
+        </h2>
 
-          <form onSubmit={handleSubmit}>
-            {/* Month Selection */}
-            <div className="mb-4">
-             
-              <select
-                id="month"
-                name="month"
-                value={values.month}
-                onChange={(e) =>
-                  setValues({ ...values, month: e.target.value })
-                }
-                className="block w-full bg-gray-100 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="" disabled selected>
-                  Choose a month
-                </option>
-                <option value="january">January</option>
-                <option value="february">February</option>
-                <option value="march">March</option>
-                <option value="april">April</option>
-                <option value="may">May</option>
-                <option value="june">June</option>
-                <option value="july">July</option>
-                <option value="august">August</option>
-                <option value="september">September</option>
-                <option value="october">October</option>
-                <option value="november">November</option>
-                <option value="december">December</option>
-              </select>
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="mb-4">
+            <select
+              id="month"
+              name="month"
+              value={values.month}
+              onChange={(e) => setValues({ ...values, month: e.target.value })}
+              className="block w-full bg-gray-800 text-white py-2 px-3 rounded-lg focus:ring-2 focus:ring-purple-500"
+            >
+              <option value="" disabled>
+                Choose a month
+              </option>
+              <option value="january">January</option>
+              <option value="february">February</option>
+              <option value="march">March</option>
+              <option value="april">April</option>
+              <option value="may">May</option>
+              <option value="june">June</option>
+              <option value="july">July</option>
+              <option value="august">August</option>
+              <option value="september">September</option>
+              <option value="october">October</option>
+              <option value="november">November</option>
+              <option value="december">December</option>
+            </select>
+          </div>
 
-            {/* Income Title Input */}
-            <div className="mb-4">
-             
-              <input
-                type="text"
-                id="income-title"
-                name="income.title"
-                className="block w-full bg-gray-100 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter income title"
-                value={values.income.title}
-                onChange={(e) =>
-                  setValues({
-                    ...values,
-                    income: { ...values.income, title: e.target.value },
-                  })
-                }
-              />
-            </div>
+          <div className="mb-4">
+            <input
+              type="text"
+              id="description"
+              name="description"
+              className="block w-full bg-gray-800 text-white py-2 px-3 rounded-lg focus:ring-2 focus:ring-purple-500"
+              placeholder="Enter income description"
+              value={values.description}
+              onChange={(e) => setValues({ ...values, description: e.target.value })}
+            />
+          </div>
 
-            {/* Income Amount Input */}
-            <div className="mb-6">
-              
-              <input
-                type="number"
-                id="income-amount"
-                name="income.amount"
-                className="block w-full bg-gray-100 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter income amount"
-                value={values.income.amount}
-                onChange={(e) =>
-                  setValues({
-                    ...values,
-                    income: { ...values.income, amount: e.target.value },
-                  })
-                }
-              />
-            </div>
+          <div className="mb-6">
+            <input
+              type="number"
+              id="amount"
+              name="amount"
+              className="block w-full bg-gray-800 text-white py-2 px-3 rounded-lg focus:ring-2 focus:ring-purple-500"
+              placeholder="Enter income amount"
+              value={values.amount}
+              onChange={(e) => setValues({ ...values, amount: e.target.value })}
+            />
+          </div>
 
-            {/* Submit Button */}
-            <div className="flex justify-center">
-              <button
-                type="submit"
-                className="bg-blue-500 text-white font-bold py-2 px-4 rounded-lg shadow-md hover:bg-blue-600 transition duration-300 ease-in-out"
-              >
-                Add Month
-              </button>
-            </div>
-          </form>
-        </div>
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              className="bg-gradient-to-r from-purple-600 to-blue-500 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:from-blue-500 hover:to-purple-600 transition duration-300 ease-in-out"
+            >
+              Add Month
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

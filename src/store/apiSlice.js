@@ -1,25 +1,47 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-const baseURI = 'http://localhost:9080/expenses-tracker';
+const baseURI = 'http://localhost:8080/api/v1';
 
 export const apiSlice = createApi({
 
     baseQuery : fetchBaseQuery({ baseUrl : baseURI}),
     endpoints : builder => ({
-        // get categories
-        getMonths : builder.query({
-            // get: 'http://localhost:8080/api/categories'
-            query: (month) => `/api/months/${month}`,
-            providesTags:['months']
+        // get list of expenses
+        getExpenses: builder.query({
+            query: (month) => ({
+                url: `/expenses/${month}`,
+                credentials: 'include',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`, // Attach token here
+                }
+            }),
+            providesTags: ['Expenses'],
         }),
 
 
-        getMonth : builder.query({
-            // get: 'http://localhost:8080/api/categories'
-            query: () => `/api/months`,
-            providesTags:['months']
+        getSalaries: builder.query({
+            query: () => ({
+                url: `/salaries`,
+                credentials: 'include',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`, // Attach token here
+                }
+            }),
+            providesTags: ['salaries'],
         }),
 
+        addMonth: builder.mutation({
+            query: ({ initialTransaction }) => ({
+                url: `/salaries`,
+                credentials: 'include',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`, // Attach token here
+                },
+                method: "POST",
+                body: initialTransaction
+            }),
+            // invalidatesTags: ['months']  // Invalidate the 'months' tag so the history (getMonths) refetches
+        }),
 
         // // get labels
         // getLabels : builder.query({
@@ -29,8 +51,12 @@ export const apiSlice = createApi({
         // }),
 
         addTransaction: builder.mutation({
-            query: ({ initialTransaction, month }) => ({
-                url: `/api/expenses/${month}`,
+            query: ({ initialTransaction }) => ({
+                url: `/expenses`,
+                credentials: 'include',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`, // Attach token here
+                },
                 method: "POST",
                 body: initialTransaction
             }),
@@ -40,23 +66,42 @@ export const apiSlice = createApi({
         
 
         deleteTransaction: builder.mutation({
-            query: ({ month, recordId }) => ({
-                url: `/api/expenses/${month}/${recordId}`,
+            query: ({ recordId }) => ({
+                url: `/expenses/${recordId}`,
+                credentials: 'include',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`, // Attach token here
+                },
                 method: "DELETE",
                 body: { id: recordId },  // Include the recordId in the body
             }),
-            invalidatesTags: ['months']  // Invalidate cache so the transactions will be refetched
+            invalidatesTags: ['Expenses']  // Invalidate cache so the transactions will be refetched
         }),
 
-        deleteMonth: builder.mutation({
+        deleteSalary: builder.mutation({
             query: ({recordId }) => ({
-                url: `/api/months/${recordId}`,
+                url: `/salaries/${recordId}`,
+                credentials: 'include',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`, // Attach token here
+                },
                 method: "DELETE",
                 body: { id: recordId },  // Include the recordId in the body
             }),
-            invalidatesTags: ['months']  // Invalidate cache so the transactions will be refetched
-        })
+            invalidatesTags: ['salaries']  // Invalidate cache so the transactions will be refetched
+        }),
         
+        // Get logged in user
+         getUser: builder.query({
+            query: () => ({
+                url: `/users`,
+                credentials: 'include',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`, // Attach token here
+                }
+            }),
+            
+        }),
 
     })
 

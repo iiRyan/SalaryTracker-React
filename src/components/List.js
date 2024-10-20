@@ -1,17 +1,12 @@
 import React from "react";
 import { default as api } from "../store/apiSlice";
 import { useParams } from "react-router-dom";
+import { colors } from "../helper/helper";
 
 export default function List() {
   const { month } = useParams();
 
-  function checkColor(category) {
-    if (category === "needs") return "rgb(54, 162, 235)";
-    if (category === "wants") return "rgb(255, 99, 132)";
-    if (category === "savings") return "rgb(255, 205, 86)";
-  }
-
-  const { data, isFetching, isSuccess, isError } = api.useGetMonthsQuery(month);
+  const { data, isFetching, isSuccess, isError } = api.useGetExpensesQuery(month);
   const [deleteTransaction] = api.useDeleteTransactionMutation();
   let Transactions;
 
@@ -25,15 +20,15 @@ export default function List() {
   
   if (isFetching) {
     Transactions = <div>Fetching</div>;
-  } else if (isSuccess && data?.expenses) {
-    Transactions = data.expenses.map((expense, index) => (
+  } else if (isSuccess && data?.length) {
+    Transactions = data.map((expense, index) => (
       <Transaction
         key={index}
         id={expense.id}
         category={expense.category}
-        title={expense.title}
+        title={expense.description}  // Use description as title, adjust as needed
         amount={expense.amount}
-        checkColor={checkColor}
+        checkColor={colors}
         handler={handlerClick}
       />
     ));
@@ -42,7 +37,7 @@ export default function List() {
   } else {
     Transactions = <div>No transactions found</div>;
   }
-
+  
   return (
     <div className="flex flex-col py-6 gap-3">
       <h1 className="py-4 font-bold text-xl">History</h1>

@@ -1,19 +1,13 @@
 import React from "react";
-import { getLabels } from "../helper/helper";
+import { getLabels, colors } from "../helper/helper";
 import { useParams } from "react-router-dom";
 import { default as api } from "../store/apiSlice";
+
 
 export default function Labels() {
   const { month } = useParams();
 
-  const { data, isFetching, isSuccess, isError } = api.useGetMonthsQuery(month);
-
-  function checkColor(category) {
-    if (category === "needs") return "rgb(54, 162, 235)";
-    if (category === "wants") return "rgb(255, 99, 132)";
-    if (category === "savings") return "rgb(255, 205, 86)";
-    return "#f9c74f"; // default color
-  }
+  const { data, isFetching, isSuccess, isError } = api.useGetExpensesQuery(month);
 
   // Add a check to see if `data` exists and has `expenses`
   if (isFetching) {
@@ -22,14 +16,14 @@ export default function Labels() {
   if (isError) {
     return <div>Error loading data.</div>;
   }
-  if (isSuccess && data?.expenses) {
-    console.log(getLabels(data.expenses, "category"));
+  if (isSuccess && data) {
+    console.log(getLabels(data, "category"));
   }
 
   return (
     <>
-      {data?.expenses && getLabels(data.expenses, "category").map((v, i) => (
-          <LabelComponent key={i} data={v} checkColor={checkColor} />
+      {data && getLabels(data, "category").map((v, i) => (
+          <LabelComponent key={i} data={v} checkColor={colors} />
         ))}
     </>
   );

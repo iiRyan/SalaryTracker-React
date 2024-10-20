@@ -5,6 +5,8 @@ import Labels from "./Labels";
 import { chart_Data, getTotal, getLeft } from "../helper/helper";
 import { useParams } from "react-router-dom";
 import { default as api } from "../store/apiSlice";
+import { useLocation } from 'react-router-dom';
+
 
 // Register required elements for Chart.js
 Chart.register(ArcElement);
@@ -12,30 +14,38 @@ Chart.register(ArcElement);
 export default function Graph() {
   const { month } = useParams();
 
-  const { data, isFetching, isSuccess, isError } = api.useGetMonthsQuery(month);
+  const location = useLocation();
+const { state: amount } = location;  // Access the amount
+console.log(amount); // Use the amount as needed
+
+  const { data, isFetching, isSuccess, isError } = api.useGetExpensesQuery(month);
   let graphData;
   let incomeAmount = 0;
   let incomeTitle = "";
   let totalExpenses = 0;
 
-  // Check if data is being fetched or errors occurred
+ 
   if (isFetching) {
     return <div>Fetching...</div>;
   }
   if (isError) {
     return <div>Error loading data.</div>;
   }
-  if (isSuccess) {
-    // Get income amount and title from data
-    incomeAmount = data.income.amount;
-    incomeTitle = data.income.title;
-
-    // Get total expenses from the helper function
-    totalExpenses = getTotal(data.expenses);
-
-    // Prepare graph data for Doughnut chart
-    graphData = <Doughnut {...chart_Data(data.expenses)}></Doughnut>;
+  if (data != null && isSuccess) {
+    // Check if data[0] and data[0].salary exist
+    if (location.state && Object.keys(location.state).length > 0) {
+        incomeAmount = location.state.amount;
+        incomeTitle = location.state.description;
+      }
+       else {
+      incomeAmount = 0;
+      incomeTitle = "No information available";
+    }
+  
+    totalExpenses = getTotal(data);
+    graphData = <Doughnut {...chart_Data(data)} />;
   }
+  
 
   return (
     <div className="flex justify-center max-w-xs mx-auto">
